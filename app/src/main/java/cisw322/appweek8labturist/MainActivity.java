@@ -1,11 +1,25 @@
 package cisw322.appweek8labturist;
 
+import android.content.Context;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
+import android.os.AsyncTask;
 import android.support.v4.app.ShareCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
+
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     //ประกาศตัวแปร
@@ -27,7 +41,62 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         // ดักเหตุการณ์คลิกที่ภาพ
         btnimage1.setOnClickListener(this);
         btnimage2.setOnClickListener(this);
+
+        Synjson synjson = new Synjson(this);
+        synjson.execute();
+
     } // oncreate
+
+    private  class Synjson extends AsyncTask<Void,Void,String>{
+        private Context context;
+        private  static final String urltablejson = "http://suksun.biz/appkalasin/jsontbkalasin.php";
+        public Synjson(Context context){
+            this.context = context;
+        } //constructor
+        @Override
+        protected String doInBackground(Void... voids) {
+            try {
+                OkHttpClient okHttpClient = new OkHttpClient();
+                Request.Builder builder = new Request.Builder();
+                Request request = builder.url(urltablejson).build();
+
+                Response response = okHttpClient.newCall(request).execute();
+                return response.body().string();
+            } catch (Exception e) {
+                Log.d("testlog1", "error inbackground ==> " + e.toString());
+                return null;
+            }
+        }// background
+
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+            try {
+
+                JSONArray objJsonArray = new JSONArray(s);
+                for (int i = 0; i < objJsonArray.length(); i++) {
+
+                    JSONObject object = objJsonArray.getJSONObject(i);
+
+                    String strtypecat = object.getString("Typecat");
+                    String strtitle = object.getString("Title");
+                    String strurlpic1 = object.getString("Urlpic1");
+                    String strurlpic2 = object.getString("Urlpic2");
+                    String strurlpic3 = object.getString("Urlpic3");
+                    String strdetail = object.getString("Detail");
+                    String strlat = object.getString("Lat");
+                    String strlng = object.getString("Lng");
+
+                    createTable.addtbkalasin(strtypecat, strtitle,
+                            strurlpic1, strurlpic2, strurlpic3, strdetail,
+                            strlat, strlng);
+
+                }// onpostex
+            }catch(JSONException e){
+                    e.printStackTrace();
+                }
+            }
+        }
 
     @Override
     public void onClick(View v) {
